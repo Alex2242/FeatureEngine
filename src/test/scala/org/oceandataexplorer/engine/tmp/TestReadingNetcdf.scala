@@ -23,6 +23,8 @@ import scala.reflect.runtime.universe._
 import ucar.nc2.NetcdfFile
 import ucar.ma2.Section
 
+import org.oceandataexplorer.utils.NDimensionalArray
+
 import org.scalatest.{FlatSpec, Matchers}
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.oceandataexplorer.utils.test.OdeCustomMatchers
@@ -41,7 +43,7 @@ class TestReadingNetcdf extends FlatSpec
   /**
    * Maximum error allowed for [[OdeCustomMatchers.RmseMatcher]]
    */
-  val maxRMSE = 2.0E-8
+  val maxRMSE = 3.0E-8
 
   "test.nc" should "be readable" in {
     val testNcFilePath = getClass.getResource("/netcdf/test.nc").toString
@@ -98,6 +100,50 @@ class TestReadingNetcdf extends FlatSpec
 
     // high rmse because values were saved as Float
     wind should rmseMatch(expectedWind)
+  }
+
+  "test.nc" should "be readable with NDarrays" in {
+    val testNcFilePath = getClass.getResource("/netcdf/test.nc").toString
+
+    val ncf = NetcdfFile.open(testNcFilePath)
+    val vars = ncf.getRootGroup.getVariables.asScala
+
+    val lonObj = vars.find(v => v.getName == "lon").get
+      .read()
+      .copyToNDJavaArray
+
+    val lon = NDimensionalArray(lonObj)
+
+    val windIntensityVar = vars.find(v => v.getName == "wind_intensity").get
+
+    val windIntensityObj = vars.find(v => v.getName == "wind_intensity").get
+      .read
+      .copyToNDJavaArray
+
+    val windDims: List[Int] = windIntensityVar.getDimensions.asScala.toList.map(dim => dim.getLength)
+
+    val windIntensity = NDimensionalArray(windIntensityObj)
+
+    (-10.0 to -1.0 by 1.0).toArray.zip(lon.get)
+      .foreach { case (expected, actual) =>
+        actual shouldEqual expected
+      }
+
+
+    val expectedWind: Array[Array[Array[Double]]] = (0 until 20 by 1).toArray.map(t =>
+      (-10.0f to -1.0f by 1.0f).toArray.map(lon =>
+        (1.0f to 10.0f by 1.0f).toArray.map(lat =>
+          math.cos(t) * math.sin(lat * lon)
+        )
+      )
+    )
+
+    for (i <- 0 until windDims.head) {
+      for (j <- 0 until windDims(1)) {
+        windIntensity(i)(j).get should rmseMatch(expectedWind(i)(j))
+
+      }
+    }
   }
 
   "test.nc" should "be h5spark style readable" in {

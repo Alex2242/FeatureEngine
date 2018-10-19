@@ -21,6 +21,7 @@ version := "0.1"
 
 // Scala version to use
 scalaVersion := "2.11.12"
+scalacOptions ++= Seq("-language:dynamics")
 
 // Configuration for tests to run with Spark
 fork in Test := true
