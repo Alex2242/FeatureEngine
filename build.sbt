@@ -17,7 +17,7 @@
 // Project Settings
 name := "FeatureEngine"
 organization := "org.oceandataexplorer"
-version := "0.1"
+version := "0.3"
 
 // Scala version to use
 scalaVersion := "2.11.12"
