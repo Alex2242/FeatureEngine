@@ -72,3 +72,6 @@ libraryDependencies += "com.github.nscala-time" %% "nscala-time" % "2.20.0"
 // https://mvnrepository.com/artifact/edu.ucar/cdm
 // hosted on Boundless Repository
 libraryDependencies += "edu.ucar" % "cdm" % "4.6.11"
+
+// https://mvnrepository.com/artifact/com.typesafe.play/play-json
+libraryDependencies += "com.typesafe.play" %% "play-json" % "2.7.2"
